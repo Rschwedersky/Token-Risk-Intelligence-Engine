@@ -19,10 +19,20 @@ interface AnalyticsTrendProps {
 }
 
 export const AnalyticsTrend: React.FC<AnalyticsTrendProps> = ({ history }) => {
-    if (!history || history.data.length === 0) {
+    // distinguish between the initial loading state and an empty history
+    // response. history === null means we fetched and got nothing back.
+    if (history === undefined) {
         return (
             <div className="bg-white rounded-lg p-6 shadow h-96 flex items-center justify-center">
                 <p className="text-gray-500">Loading...</p>
+            </div>
+        );
+    }
+
+    if (!history || history.data.length === 0) {
+        return (
+            <div className="bg-white rounded-lg p-6 shadow h-96 flex items-center justify-center">
+                <p className="text-gray-500">No analytics history available.</p>
             </div>
         );
     }

@@ -15,6 +15,9 @@ export default function TokenDetailPage({
 }: {
     params: Promise<{ address: string }>;
 }) {
+    // `params` is a promise returning the params object; React 18's `use`
+    // helper unwraps it for us. this is required by Next.js in newer versions
+    // to avoid warnings – direct access is deprecated.
     const { address } = use(params);
     const searchParams = useSearchParams();
     const chain = (searchParams.get("chain") as "ethereum" | "optimism") || "ethereum";

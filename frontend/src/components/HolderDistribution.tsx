@@ -9,10 +9,20 @@ interface HolderDistributionProps {
 }
 
 export const HolderDistribution: React.FC<HolderDistributionProps> = ({ analytics }) => {
-    if (!analytics) {
+    // if `analytics` is undefined we're still waiting for the request to complete.
+    if (analytics === undefined) {
         return (
             <div className="bg-white rounded-lg p-6 shadow h-96 flex items-center justify-center">
                 <p className="text-gray-500">Loading...</p>
+            </div>
+        );
+    }
+
+    // null means the server responded but there was no data to show.
+    if (analytics === null) {
+        return (
+            <div className="bg-white rounded-lg p-6 shadow h-96 flex items-center justify-center">
+                <p className="text-gray-500">No holder distribution data available.</p>
             </div>
         );
     }

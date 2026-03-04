@@ -9,12 +9,24 @@ interface MetricsGridProps {
 }
 
 export const MetricsGrid: React.FC<MetricsGridProps> = ({ analytics }) => {
-    if (!analytics) {
+    // `analytics === null` means the backend returned no analytics data for the token.
+    // In that case we don't want to show a loading skeleton indefinitely, so display
+    // a friendly message instead. Only treat `undefined` as the transient loading
+    // state (this happens while the request is in flight).
+    if (analytics === undefined) {
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[...Array(8)].map((_, i) => (
                     <div key={i} className="bg-slate-200 h-32 rounded-lg animate-pulse" />
                 ))}
+            </div>
+        );
+    }
+
+    if (analytics === null) {
+        return (
+            <div className="bg-white rounded-lg p-6 shadow text-center text-gray-600">
+                <p>Analytics are not available for this token.</p>
             </div>
         );
     }

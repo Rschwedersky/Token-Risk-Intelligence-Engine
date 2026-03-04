@@ -107,6 +107,12 @@ GET /api/v1/tokens/{token_address}/{chain_name}/history
 **Get Uniswap token analysis on Ethereum:**
 ```bash
 curl "http://localhost:8000/api/v1/tokens/0x1f9840a85d5af5bf1d1762f925bdaddc4201f984/ethereum"
+
+# the two seeded tokens (UNI and AAVE) will always return analytics, but the
+# API now also attempts to compute metrics directly from on-chain logs if no
+# snapshot exists yet. you can query any real token address on ethereum or
+# optimism and the server will scan the transfer history and build a quick
+# analytics result at runtime. this may take several seconds the first time.
 ```
 
 **Get top Aave holders:**

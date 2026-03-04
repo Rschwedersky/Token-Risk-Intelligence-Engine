@@ -121,16 +121,54 @@ async def get_token_analysis(
                 name=name,
                 decimals=decimals,
                 total_supply=str(total_supply),  # Convert int to string
+                circulating_supply=str(total_supply),  # Default to total_supply
             )
             await token.save()
         except Exception as e:
             logger.error(f"Error fetching token: {e}")
             raise HTTPException(status_code=404, detail="Token not found")
 
-    # Get latest analytics
+    # Get latest analytics (may be missing for new tokens)
     analytics = await TokenAnalytics.find_one(
         TokenAnalytics.token_address == token_address, sort=[("snapshot_date", -1)]
     )
+
+    # if we have no analytics, attempt to compute from on-chain data so that
+    # the API can still respond with meaningful numbers directly from the network.
+    if not analytics:
+        try:
+            # fetch holders via chain; limit to first 200 to avoid blowing memory
+            holders = await chain.get_token_holders(token_address, limit=200)
+            if holders:
+                from app.analytics import TokenAnalyticsEngine
+
+                metrics = TokenAnalyticsEngine.analyze_holder_distribution(holders)
+
+                # build a lightweight analytics-like dict; some fields are
+                # placeholders since we only have holder balances.
+                analytics = TokenAnalytics(
+                    token_address=token_address,
+                    holder_count=metrics.get("holder_count"),
+                    unique_holders_24h=metrics.get("unique_holders"),
+                    top_10_holder_percentage=metrics.get("top_10_percentage"),
+                    top_100_holder_percentage=metrics.get("top_100_percentage"),
+                    gini_coefficient=metrics.get("gini_coefficient"),
+                    whale_accumulation_score=metrics.get("whale_accumulation_score"),
+                    liquidity_dependency_ratio=0.0,
+                    daily_active_wallets=0,
+                    transfer_volume_24h=0,
+                    emission_pressure_estimator=0,
+                    price_change_24h=0,
+                    snapshot_date=datetime.utcnow(),
+                )
+
+                # optionally save this analytic snapshot for future requests
+                try:
+                    await analytics.save()
+                except Exception:
+                    pass
+        except Exception as e:
+            logger.warning(f"could not compute on-chain analytics: {e}")
 
     return {
         "token": {
